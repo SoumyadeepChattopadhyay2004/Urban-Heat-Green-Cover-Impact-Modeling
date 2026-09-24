@@ -2,13 +2,13 @@
 
 ### Statistical Modeling of Urban Vegetation and Land Surface Temperature Anomalies
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)
-![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange?logo=jupyter)
-![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?logo=pandas)
-![Scikit-Learn](https://img.shields.io/badge/scikit--learn-Machine%20Learning-F7931E?logo=scikit-learn)
-![Statsmodels](https://img.shields.io/badge/Statsmodels-Statistical%20Modeling-3C5A99)
-![Research](https://img.shields.io/badge/Project-Research%20Oriented-purple)
-![Status](https://img.shields.io/badge/Status-Research%20%2F%20Development-yellow)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://www.python.org/)
+[![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange?logo=jupyter)](https://jupyter.org/)
+[![Pandas](https://img.shields.io/badge/Pandas-Data%20Analysis-150458?logo=pandas)](https://pandas.pydata.org/)
+[![Scikit--learn](https://img.shields.io/badge/scikit--learn-Machine%20Learning-F7931E?logo=scikit-learn)](https://scikit-learn.org/)
+[![Statsmodels](https://img.shields.io/badge/Statsmodels-Statistical%20Modeling-3C5A99)](https://www.statsmodels.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Research%2FDevelopment-yellow)](#project-status)
 
 ---
 
@@ -16,688 +16,240 @@
 
 **Urban Heat & Green-Cover Impact Modeling** is a research-oriented data science project that investigates the relationship between **urban vegetation** and **Land Surface Temperature (LST) anomalies**.
 
-The project focuses not only on predicting temperature, but primarily on understanding and quantifying the statistical association between vegetation and urban heat after accounting for other measurable environmental and urban characteristics.
+Rather than optimizing purely for predictive accuracy, the project focuses on **understanding and quantifying** the statistical association between vegetation and urban heat, after accounting for other measurable environmental and urban characteristics.
 
-### Core Research Question
+> **Core research question:** How strongly is urban vegetation associated with local surface temperature, after accounting for built-environment and other environmental variables?
 
-> **How strongly is urban vegetation associated with local surface temperature after accounting for built-environment and other environmental variables?**
-
-The primary vegetation indicator is **NDVI (Normalized Difference Vegetation Index)**, while LST anomaly is used as the primary response variable.
+The primary vegetation indicator is **NDVI** (Normalized Difference Vegetation Index); **LST anomaly** is the primary response variable.
 
 ---
 
-# 🎯 Objectives
+## 🎯 Objectives
 
-The main objectives of this project are to:
-
-* Investigate the relationship between urban vegetation and LST anomaly.
-* Quantify the association between NDVI and surface temperature.
-* Control for relevant urban and environmental variables.
-* Compare simple and multivariable regression models.
-* Investigate possible nonlinear relationships.
-* Evaluate multicollinearity among explanatory variables.
-* Perform statistical and residual diagnostics.
-* Examine whether residual patterns vary across cities and climate zones.
-* Evaluate model robustness using grouped cross-validation.
-* Provide interpretable coefficient estimates rather than relying only on prediction metrics.
+- Investigate the relationship between urban vegetation and LST anomaly
+- Quantify the association between NDVI and surface temperature
+- Control for relevant urban and environmental variables
+- Compare simple and multivariable regression models
+- Investigate possible nonlinear (quadratic) relationships
+- Evaluate multicollinearity among explanatory variables
+- Perform statistical and residual diagnostics
+- Examine whether residual patterns vary across cities and climate zones
+- Evaluate model robustness using grouped cross-validation
+- Provide interpretable coefficient estimates rather than relying on prediction metrics alone
 
 ---
 
-# 🔬 Research Perspective
+## 🔬 Research Perspective
 
-A conventional machine-learning project might ask:
+A conventional machine-learning project asks: *"Can we predict urban temperature accurately?"*
 
-> **Can we predict urban temperature accurately?**
-
-This project asks a different question:
-
-> **What is the estimated association between vegetation and temperature after accounting for other variables?**
+This project asks a different question: *"What is the estimated association between vegetation and temperature, after accounting for other variables?"*
 
 For example, the analysis aims to produce an interpretable statement such as:
 
-> **A 0.1-unit increase in NDVI is associated with an estimated X °C change in LST anomaly, holding the other variables in the model constant.**
+> A 0.1-unit increase in NDVI is associated with an estimated **X °C** change in LST anomaly, holding the other variables in the model constant.
 
 The exact value of **X** is obtained from the fitted statistical model.
 
-This makes the project particularly relevant to:
-
-* Environmental Data Science
-* Urban Climate Research
-* Statistical Modeling
-* Geospatial Analytics
-* Sustainability Research
-* Urban Planning
-* Climate Adaptation
+This makes the project relevant to: Environmental Data Science · Urban Climate Research · Statistical Modeling · Geospatial Analytics · Sustainability Research · Urban Planning · Climate Adaptation.
 
 ---
 
-# 📊 Dataset
+## 📊 Dataset
 
-The project currently uses:
+The project uses `global_urban_heat_island_2015_2025.csv`, a city-year panel dataset.
 
-```text
-global_urban_heat_island_2015_2025.csv
-```
+| Property         | Value                    |
+|-------------------|--------------------------|
+| Observations      | 550                      |
+| Cities            | 50                       |
+| Countries         | 28                       |
+| Years covered     | 2015 – 2025              |
+| Climate zones     | 15                       |
+| Data structure    | Repeated city-year panel |
 
-### Dataset Summary
-
-| Property       |                  Value |
-| -------------- | ---------------------: |
-| Observations   |                    550 |
-| Cities         |                     50 |
-| Countries      |                     28 |
-| Years          |              2015–2025 |
-| Climate Zones  |                     15 |
-| Data Structure | City-Year observations |
-
-The dataset therefore contains repeated observations for cities across multiple years.
+Because the dataset contains repeated observations per city, records **cannot be treated as fully independent** — this shapes the modeling and validation approach described below.
 
 ---
 
-# 🧾 Variables
+## 🧾 Variables
 
-## Target Variable
+| Variable | Role | Description |
+|---|---|---|
+| `lst_anomaly_c` | Target | Land Surface Temperature anomaly (°C) — the primary dependent variable |
+| `ndvi_mean` | Primary predictor | Mean NDVI — the primary measure of urban vegetation/greenness |
+| `impervious_pct` | Urban surface control | Percentage of impervious surface (built environment) |
+| `tree_canopy_pct` | Alternative vegetation measure | Percentage of tree canopy, used for sensitivity analysis |
+| `pop_density_km2` | Urban-density control | Population density per km² |
+| `climate_zone` | Climate control | Climate classification for each city |
+| `year` | Temporal variable | Observation year (2015–2025) |
+| `city` | Geographic identifier | Used for panel structure and grouped validation |
+| `heat_mortality_per_100k` | Reserved for future work | Heat-related mortality per 100k population; not used as a predictor of LST anomaly |
 
-### `lst_anomaly_c`
+**Primary coefficient of interest:** β<sub>NDVI</sub>, where the estimated association for a 0.1-unit increase in NDVI is `0.1 × β_NDVI`.
 
-Land Surface Temperature anomaly measured in °C.
+### Current data scope
 
-This is the primary dependent variable used throughout the regression analysis.
-
----
-
-## Primary Predictor
-
-### `ndvi_mean`
-
-Mean NDVI (Normalized Difference Vegetation Index).
-
-NDVI is used as the primary measure of urban vegetation/greenness.
-
-The primary coefficient of interest is:
-
-$$
-\beta_{NDVI}
-$$
-
-The estimated association for a 0.1-unit increase in NDVI is:
-
-$$
-0.1 \times \beta_{NDVI}
-$$
+The original research concept also considered elevation, distance from water bodies, latitude/longitude, and a separate built-up-area measure. These are **not available in the current dataset** and are therefore excluded from the current regression specifications (see [Limitations](#-limitations) and [Future Work](#-future-work)).
 
 ---
 
-## Urban Surface Variable
+## 🧠 Methodology
 
-### `impervious_pct`
-
-Percentage of impervious surface.
-
-This variable represents the built/impervious component of the urban environment.
-
----
-
-## Alternative Vegetation Variable
-
-### `tree_canopy_pct`
-
-Percentage of tree canopy.
-
-This is used as an alternative vegetation indicator for sensitivity analysis.
-
----
-
-## Population Variable
-
-### `pop_density_km2`
-
-Population density per square kilometre.
-
-This is included as an urban-density control.
-
----
-
-## Climate Variable
-
-### `climate_zone`
-
-Climate classification associated with each city.
-
-Climate-zone effects are considered in the adjusted regression analysis.
-
----
-
-## Temporal Variable
-
-### `year`
-
-Year of observation.
-
-The dataset covers the period:
-
-```text
-2015–2025
+```mermaid
+flowchart TD
+    A[Dataset] --> B[Data Validation & Preprocessing]
+    B --> C[Exploratory Data Analysis]
+    C --> D[Correlation & VIF Analysis]
+    D --> E[Simple Linear Regression]
+    D --> F[Multiple Linear Regression]
+    E --> G[Quadratic / Nonlinear Model]
+    F --> G
+    G --> H[Robustness & Sensitivity Tests]
+    H --> I[Residual Diagnostics]
+    I --> J[Grouped Cross-Validation]
 ```
 
 ---
 
-## Geographic Identifier
+## 📐 Statistical Models
 
-### `city`
+### 1. Simple linear regression
 
-City identifier used to distinguish repeated observations and support grouped validation and panel-oriented analysis.
+Evaluates the unadjusted relationship between NDVI and LST anomaly:
 
----
+$$LST_i = \beta_0 + \beta_1 NDVI_i + \epsilon_i$$
 
-## Additional Variable
+### 2. Multiple linear regression (primary model)
 
-### `heat_mortality_per_100k`
+Adjusts for additional explanatory variables:
 
-Heat-related mortality per 100,000 population.
+$$LST_{it} = \beta_0 + \beta_1 NDVI_{it} + \beta_2 Impervious_i + \beta_3 Population_i + \gamma\, Climate_i + \delta\, Year_t + \epsilon_{it}$$
 
-This variable is available for potential future health-impact analysis and is not treated as a primary predictor of LST anomaly.
+The NDVI coefficient is interpreted conditional on the other variables in the model.
 
----
+### 3. Quadratic regression
 
-# ⚠️ Current Data Scope
+Tests whether the NDVI–LST relationship is nonlinear:
 
-The original research concept includes several additional environmental variables, but they are **not currently available in the supplied dataset**.
+$$LST = \beta_0 + \beta_1 NDVI_c + \beta_2 NDVI_c^2 + Controls + \epsilon, \qquad NDVI_c = NDVI - \overline{NDVI}$$
 
-These include:
+### 4. City + year fixed-effects model (planned robustness extension)
 
-* Elevation
-* Distance from water bodies
-* Latitude
-* Longitude
-* Separate built-up-area measurement
+$$LST_{it} = \beta_1 NDVI_{it} + \alpha_i + \gamma_t + \epsilon_{it}$$
 
-Therefore, these variables are not included in the current regression specifications.
-
-Future versions of the project can incorporate them to strengthen environmental and spatial analysis.
+where α<sub>i</sub> are city fixed effects and γ<sub>t</sub> are year fixed effects, focusing on within-city change over time.
 
 ---
 
-# 🧠 Methodology
+## 🌿 Main Effect Interpretation
 
-The analysis follows a progressive modeling framework.
+Given a fitted NDVI coefficient β, a 0.1-unit increase in NDVI corresponds to:
 
-```text
-                    ┌─────────────────────┐
-                    │       Dataset       │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Data Validation &   │
-                    │ Preprocessing       │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Exploratory Data    │
-                    │ Analysis             │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Correlation & VIF   │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-             ┌─────────────────┴─────────────────┐
-             │                                   │
-             ▼                                   ▼
-    Simple Linear Regression          Multiple Linear Regression
-             │                                   │
-             └─────────────────┬─────────────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Quadratic /         │
-                    │ Nonlinear Model     │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Robustness &        │
-                    │ Sensitivity Tests   │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Residual Diagnostics│
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │ Grouped Validation  │
-                    └─────────────────────┘
+$$\Delta LST = 0.1\,\beta$$
+
+> **Interpretation template:** A 0.1-unit increase in NDVI is associated with an estimated **X °C** difference in LST anomaly, conditional on the other variables included in the model.
+
+Every reported effect is accompanied by: estimated coefficient · standard error · 95% confidence interval · p-value · model specification.
+
+---
+
+## 🔍 Multicollinearity Analysis
+
+- **Correlation matrix** — identifies strong relationships between continuous variables.
+- **Variance Inflation Factor (VIF)** — flags potential multicollinearity, which is particularly relevant since NDVI, tree canopy, and impervious surface measures can be strongly correlated. High multicollinearity increases coefficient uncertainty and complicates interpretation of individual predictor effects.
+
+---
+
+## 🧪 Statistical Diagnostics
+
+| Diagnostic | Purpose |
+|---|---|
+| Residual vs. Fitted plot | Nonlinearity, heteroskedasticity, systematic prediction error |
+| Q-Q plot | Inspect residual distribution |
+| Breusch–Pagan test | Assess evidence of heteroskedasticity |
+| Durbin–Watson statistic | Initial check for serial correlation (interpreted with care given the panel structure) |
+
+---
+
+## 🏙️ Panel Structure
+
+The dataset contains repeated observations per city across multiple years, so within-city observations cannot be assumed independent. The main regression inference uses **city-clustered standard errors**; the city + year fixed-effects model above is a recommended robustness extension.
+
+---
+
+## 🤖 Model Validation
+
+Prediction is treated as a secondary objective. Because multiple observations belong to the same city, a random train/test split risks information leakage. The project instead uses **city-grouped cross-validation**, so that all observations for a given city fall entirely within either the training or the validation fold — never both.
+
+**Evaluation metrics:**
+
+$$MAE = \frac{1}{n}\sum_{i=1}^{n}|y_i - \hat{y}_i| \qquad RMSE = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2} \qquad R^2 = 1 - \frac{SS_{res}}{SS_{tot}}$$
+
+---
+
+## 📉 Residual Analysis
+
+Residuals ($e_i = y_i - \hat{y}_i$) are examined across cities, climate zones, and fitted values to identify locations or conditions poorly represented by the current model.
+
+---
+
+## 🗺️ Spatial Analysis — Planned Extension
+
+Formal spatial statistics require geographic coordinates, which the current dataset does not provide. Planned extensions include Moran's I and Local Moran's I / LISA for spatial autocorrelation, and spatial lag, spatial error, or Geographically Weighted Regression models, once coordinates are incorporated.
+
+---
+
+## 📁 Repository Structure
+
 ```
-
----
-
-# 📐 Statistical Models
-
-## 1. Simple Linear Regression
-
-The first model evaluates the unadjusted relationship between NDVI and LST anomaly.
-
-$$
-LST_i = \beta_0 + \beta_1NDVI_i + \epsilon_i
-$$
-
-This provides a baseline estimate of the relationship between vegetation and surface temperature.
-
----
-
-## 2. Multiple Linear Regression
-
-The primary adjusted model incorporates additional explanatory variables:
-
-$$
-LST_{it}
-=
-\beta_0
-+
-\beta_1NDVI_{it}
-+
-\beta_2Impervious_i
-+
-\beta_3Population_i
-+
-\gamma Climate_i
-+
-\delta Year_t
-+
-\epsilon_{it}
-$$
-
-The NDVI coefficient is interpreted while accounting for the other variables included in the model.
-
----
-
-## 3. Quadratic Regression
-
-The project investigates whether the NDVI relationship may be nonlinear.
-
-The quadratic specification is:
-
-$$
-LST =
-\beta_0
-+
-\beta_1NDVI_c
-+
-\beta_2NDVI_c^2
-+
-Controls
-+
-\epsilon
-$$
-
-where:
-
-$$
-NDVI_c = NDVI-\overline{NDVI}
-$$
-
-This allows the analysis to investigate whether the temperature relationship changes at different vegetation levels.
-
----
-
-# 🌿 Main Effect Interpretation
-
-The central quantity of interest is the NDVI coefficient:
-
-$$
-\beta_{NDVI}
-$$
-
-If the estimated coefficient is \(\beta\), then a 0.1-unit increase in NDVI corresponds to:
-
-$$
-\Delta LST = 0.1\beta
-$$
-
-### Example interpretation format
-
-> A 0.1-unit increase in NDVI is associated with an estimated **X °C difference in LST anomaly**, conditional on the other variables included in the model.
-
-The interpretation should always be accompanied by:
-
-* Estimated coefficient
-* Standard error
-* 95% confidence interval
-* p-value
-* Model specification
-
----
-
-# 🔍 Multicollinearity Analysis
-
-The project evaluates multicollinearity using:
-
-### Correlation Analysis
-
-A correlation matrix is used to identify strong relationships between continuous variables.
-
-### Variance Inflation Factor (VIF)
-
-VIF is calculated to identify potential multicollinearity among explanatory variables.
-
-This is particularly important because:
-
-```text
-NDVI
-  ↕
-Tree Canopy
-  ↕
-Urban Surface Characteristics
-```
-
-may exhibit substantial correlations.
-
-High multicollinearity can increase coefficient uncertainty and make individual predictor effects difficult to interpret.
-
----
-
-# 🧪 Statistical Diagnostics
-
-The project includes several diagnostic procedures.
-
-### Residual vs Fitted Plot
-
-Used to investigate:
-
-* Nonlinearity
-* Heteroskedasticity
-* Systematic prediction errors
-
-### Q-Q Plot
-
-Used to inspect residual distribution.
-
-### Breusch-Pagan Test
-
-Used to assess evidence of heteroskedasticity.
-
-### Durbin-Watson Diagnostic
-
-Used as an initial diagnostic for serial correlation.
-
-Because the data contain repeated city observations, temporal and within-city dependence should be considered when interpreting this diagnostic.
-
----
-
-# 🏙️ Panel Structure
-
-The dataset contains repeated observations for the same cities over several years.
-
-Therefore, observations from a single city cannot necessarily be considered completely independent.
-
-The current analysis uses **city-clustered standard errors** for the main regression inference.
-
-A recommended robustness extension is a:
-
-### City + Year Fixed-Effects Model
-
-$$
-LST_{it}
-=
-\beta_1NDVI_{it}
-+
-\alpha_i
-+
-\gamma_t
-+
-\epsilon_{it}
-$$
-
-where:
-
-* \(\alpha_i\) = city-specific fixed effects
-* \(\gamma_t\) = year fixed effects
-
-This specification focuses on changes within cities over time.
-
----
-
-# 🤖 Model Validation
-
-Prediction is treated as a secondary objective.
-
-Because multiple observations belong to the same cities, random train/test splitting can cause information leakage.
-
-The project therefore uses **city-grouped cross-validation**.
-
-Conceptually:
-
-```text
-City A ─┐
-City B ─┤
-City C ─┤── Training
-City D ─┘
-
-City E ─── Validation
-```
-
-rather than randomly distributing observations from the same city across both datasets.
-
-### Evaluation Metrics
-
-* MAE
-* RMSE
-* R²
-
----
-
-# 📊 Evaluation Metrics
-
-## Mean Absolute Error
-
-$$
-MAE =
-\frac{1}{n}
-\sum_{i=1}^{n}|y_i-\hat{y}_i|
-$$
-
----
-
-## Root Mean Squared Error
-
-$$
-RMSE =
-\sqrt{
-\frac{1}{n}
-\sum_{i=1}^{n}(y_i-\hat{y}_i)^2
-}
-$$
-
----
-
-## R²
-
-$$
-R^2 =
-1-\frac{SS_{res}}{SS_{tot}}
-$$
-
----
-
-# 📉 Residual Analysis
-
-Residuals are calculated as:
-
-$$
-e_i=y_i-\hat{y}_i
-$$
-
-The project investigates residuals across:
-
-* Cities
-* Climate zones
-* Fitted values
-* Observation distributions
-
-Large residuals can indicate locations or conditions that are not adequately represented by the current model.
-
----
-
-# 🗺️ Spatial Analysis — Planned Extension
-
-A major future component is spatial residual analysis.
-
-However, genuine spatial statistics require geographic information such as:
-
-* Latitude
-* Longitude
-* Geographic boundaries
-
-The current dataset does not provide sufficient geographic coordinates for formal spatial autocorrelation analysis.
-
-Future work can therefore include:
-
-### Global Spatial Autocorrelation
-
-* Moran's I
-
-### Local Spatial Analysis
-
-* Local Moran's I
-* LISA
-
-### Spatial Modeling
-
-* Spatial lag models
-* Spatial error models
-* Geographically Weighted Regression
-
-Potential workflow:
-
-```text
-Coordinates
-     ↓
-GeoDataFrame
-     ↓
-Spatial Weights
-     ↓
-Residual Mapping
-     ↓
-Moran's I
-     ↓
-Local Spatial Clusters
-     ↓
-Spatial Model
-```
-
----
-
-# 📁 Repository Structure
-
-Recommended repository structure:
-
-```text
 Urban-Heat-Green-Cover-Impact-Modeling/
-│
 ├── README.md
-│
-├── Urban_Heat_Green_Cover_Impact_Modeling.ipynb
-│
-├── global_urban_heat_island_2015_2025.csv
-│
+├── LICENSE
 ├── requirements.txt
-│
-├── results/
-│   ├── figures/
-│   ├── tables/
-│   └── model_outputs/
-│
-└── docs/
-    └── research_notes.md
-```
-
-For a minimal version:
-
-```text
-Urban-Heat-Green-Cover-Impact-Modeling/
-│
-├── README.md
-├── Urban_Heat_Green_Cover_Impact_Modeling.ipynb
 ├── global_urban_heat_island_2015_2025.csv
-└── requirements.txt
+└── Urban_Heat_Green_Cover_Impact_Modeling.ipynb
 ```
 
 ---
 
-# 🛠️ Technology Stack
+## 🛠️ Technology Stack
 
-| Category                | Technology          |
-| ----------------------- | ------------------- |
-| Language                | Python              |
-| Notebook                | Jupyter Notebook    |
-| Data Processing         | Pandas              |
-| Numerical Computing     | NumPy               |
-| Visualization           | Matplotlib, Seaborn |
-| Statistical Modeling    | Statsmodels         |
-| Machine Learning        | Scikit-learn        |
-| Validation              | Scikit-learn        |
-| Future Spatial Analysis | GeoPandas, PySAL    |
+| Category | Technology |
+|---|---|
+| Language | Python |
+| Notebook | Jupyter |
+| Data processing | Pandas, NumPy |
+| Visualization | Matplotlib, Seaborn |
+| Statistical modeling | Statsmodels |
+| Machine learning / validation | Scikit-learn |
+| Planned spatial analysis | GeoPandas, PySAL (libpysal, esda) |
 
 ---
 
-# 📦 Installation
-
-Clone the repository:
+## 📦 Installation
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+# Clone the repository
+git clone https://github.com/SoumyadeepChattopadhyay2004/Urban-Heat-Green-Cover-Impact-Modeling.git
 cd Urban-Heat-Green-Cover-Impact-Modeling
-```
 
-Create a virtual environment:
-
-```bash
+# Create and activate a virtual environment
 python -m venv venv
-```
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-### Windows
-
-```bash
-venv\Scripts\activate
-```
-
-### Linux / macOS
-
-```bash
-source venv/bin/activate
-```
-
-Install dependencies:
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-Launch Jupyter:
-
-```bash
+# Launch Jupyter and open the notebook
 jupyter notebook
 ```
 
-Open:
+Then open `Urban_Heat_Green_Cover_Impact_Modeling.ipynb` and run the cells sequentially.
 
-```text
-Urban_Heat_Green_Cover_Impact_Modeling.ipynb
+### Requirements
+
 ```
-
----
-
-# 📋 Requirements
-
-Create a `requirements.txt` file containing:
-
-```text
 numpy
 pandas
 matplotlib
@@ -707,365 +259,76 @@ statsmodels
 jupyter
 ```
 
-For future spatial extensions:
-
-```text
-geopandas
-libpysal
-esda
-contextily
-```
+For the planned spatial extension: `geopandas`, `libpysal`, `esda`, `contextily`.
 
 ---
 
-# ▶️ Running the Project
+## 📌 Key Outputs
 
-1. Clone the repository.
-2. Install the required dependencies.
-3. Place the dataset in the repository root or update the notebook path.
-4. Launch Jupyter Notebook.
-5. Open the project notebook.
-6. Run the notebook cells sequentially.
-7. Review the generated statistical outputs and visualizations.
+Dataset summary statistics · missing-value analysis · distribution plots · NDVI–LST relationship plots · correlation matrix · VIF analysis · regression coefficients with confidence intervals and significance tests · effect-size estimates · model comparison · residual and Q-Q plots · heteroskedasticity diagnostics · city- and climate-zone-level residual summaries · grouped cross-validation performance.
 
 ---
 
-# 📌 Key Outputs
+## ⚠️ Important Interpretation Note
 
-The project generates or investigates:
+This is an **observational** statistical analysis: **association ≠ causation**. The estimated NDVI coefficient should not be interpreted as evidence that changing vegetation will causally change LST by the estimated amount.
 
-* Dataset summary statistics
-* Missing-value analysis
-* Distribution plots
-* NDVI–LST relationship plots
-* Correlation matrix
-* VIF analysis
-* Regression coefficients
-* Confidence intervals
-* Statistical significance
-* Effect-size estimates
-* Model comparison
-* Residual plots
-* Q-Q plots
-* Heteroskedasticity diagnostics
-* City-level residual summaries
-* Climate-zone residual summaries
-* Cross-validation performance
+- ✅ Preferred phrasing: *"associated with,"* *"estimated association,"* *"conditional relationship"*
+- ❌ Avoid: *"Increasing NDVI by 0.1 causes LST to decrease by X °C."*
+- ✅ Instead: *"A 0.1-unit increase in NDVI is associated with an estimated X °C difference in LST anomaly, after adjustment for the variables included in the model."*
 
 ---
 
-# ⚠️ Important Interpretation Note
+## 🚧 Limitations
 
-This is an **observational statistical analysis**.
-
-Therefore:
-
-$$
-\boxed{\text{Association} \neq \text{Causation}}
-$$
-
-The estimated NDVI coefficient should not automatically be interpreted as evidence that changing vegetation will causally change LST by the estimated amount.
-
-Preferred terminology:
-
-* "associated with"
-* "estimated association"
-* "conditional relationship"
-* "adjusted relationship"
-
-Avoid unsupported causal statements such as:
-
-> Increasing NDVI by 0.1 causes LST to decrease by X°C.
-
-Instead:
-
-> A 0.1-unit increase in NDVI is associated with an estimated X°C difference in LST anomaly after adjustment for the variables included in the model.
+1. **Observational data** — the project does not establish causal relationships.
+2. **Missing geographic variables** — elevation, latitude/longitude, and distance from water bodies are not currently available.
+3. **Limited urban morphology** — impervious surface percentage is available, but no separate built-up-area measurement.
+4. **Potential omitted variables** — humidity, wind, solar radiation, albedo, building height, road density, surface emissivity, and anthropogenic heat are not comprehensively represented.
+5. **Spatial dependence** — formal spatial autocorrelation analysis is not currently possible without geographic coordinates.
+6. **Panel dependence** — repeated observations from the same city may be correlated over time.
 
 ---
 
-# 🚧 Limitations
+## 🔬 Future Work
 
-### 1. Observational Data
-
-The project does not establish causal relationships.
-
-### 2. Missing Geographic Variables
-
-Elevation, latitude, longitude and distance from water bodies are not currently available.
-
-### 3. Limited Urban Morphology
-
-The dataset contains impervious surface percentage but does not provide a separate built-up-area measurement.
-
-### 4. Potential Omitted Variables
-
-Important factors such as:
-
-* Humidity
-* Wind
-* Solar radiation
-* Albedo
-* Building height
-* Road density
-* Surface emissivity
-* Anthropogenic heat
-
-may influence urban temperature but are not comprehensively represented.
-
-### 5. Spatial Dependence
-
-Formal spatial autocorrelation analysis cannot be performed without suitable geographic coordinates.
-
-### 6. Panel Dependence
-
-Repeated observations from the same city may be correlated over time.
+- **Geographic enrichment:** latitude, longitude, elevation, distance to water bodies
+- **Remote-sensing features:** EVI, LAI, NDWI, NDBI, albedo, surface emissivity, land-cover classes
+- **Urban morphology:** building density/height, road density, urban compactness, street-canyon characteristics
+- **Meteorological controls:** air temperature, relative humidity, wind speed, precipitation, solar radiation
+- **Advanced statistical models:** two-way fixed effects, mixed-effects/hierarchical models, robust panel regression
+- **Spatial statistics:** Moran's I, Local Moran's I / LISA, spatial lag/error models, Geographically Weighted Regression
+- **Health-impact extension:** using `heat_mortality_per_100k` to study associations between urban thermal conditions and heat-related health outcomes (a separate research question requiring an appropriate health-oriented design)
 
 ---
 
-# 🔬 Future Work
-
-The project can be expanded in several directions.
-
-## Geographic Enrichment
-
-Add:
-
-* Latitude
-* Longitude
-* Elevation
-* Distance to water bodies
-
-## Remote-Sensing Features
-
-Potential additions:
-
-* EVI
-* LAI
-* NDWI
-* NDBI
-* Albedo
-* Surface emissivity
-* Land-cover classes
-
-## Urban Morphology
-
-Potential features:
-
-* Building density
-* Building height
-* Road density
-* Urban compactness
-* Street-canyon characteristics
-
-## Meteorological Controls
-
-Potential additions:
-
-* Air temperature
-* Relative humidity
-* Wind speed
-* Precipitation
-* Solar radiation
-
-## Advanced Statistical Models
-
-Potential extensions:
-
-* Two-way fixed effects
-* Mixed-effects models
-* Hierarchical models
-* Robust panel regression
-
-## Spatial Statistics
-
-Potential extensions:
-
-* Moran's I
-* Local Moran's I
-* LISA
-* Spatial lag models
-* Spatial error models
-* Geographically Weighted Regression
-
----
-
-# 🌍 Potential Research Extension
-
-The dataset also contains:
-
-```text
-heat_mortality_per_100k
-```
-
-This provides an opportunity for a future research extension investigating whether urban thermal conditions are associated with heat-related health outcomes.
-
-A possible future research framework is:
-
-```text
-Urban Vegetation
-       ↓
-Urban Thermal Environment
-       ↓
-LST Anomaly
-       ↓
-Heat Exposure
-       ↓
-Potential Health Outcomes
-```
-
-This would constitute a separate research question and should be analyzed using an appropriate health-oriented statistical design.
-
----
-
-# ⭐ Project Highlights
-
-### Why this project is different
-
-Most introductory ML projects focus on:
-
-> **Prediction accuracy**
-
-This project additionally focuses on:
-
-> **Interpretability + statistical inference + environmental reasoning**
-
-Key strengths include:
-
-* 🌱 Vegetation-focused analysis
-* 🌡️ Urban heat modeling
-* 📊 Interpretable regression coefficients
-* 🔬 Statistical inference
-* 🏙️ City-year panel structure
-* 📈 Nonlinear modeling
-* 🧪 Statistical diagnostics
-* 🔍 Residual investigation
-* 🤖 Grouped validation
-* 🗺️ Planned spatial analysis
-* 📚 Research-oriented methodology
-
----
-
-# 🏆 Research Contribution
-
-The project is designed around the following analytical progression:
-
-```text
-Does vegetation correlate with temperature?
-                ↓
-Does the relationship remain after adjustment?
-                ↓
-Is the relationship nonlinear?
-                ↓
-Is the result robust to alternative vegetation measures?
-                ↓
-Does the relationship remain within cities over time?
-                ↓
-Where does the model fail?
-                ↓
-Are residuals spatially structured?
-```
-
-This progression transforms a basic regression exercise into a broader **urban environmental data-science research project**.
-
----
-
-# 📑 Suggested Research Statement
-
-> This project investigates the association between urban vegetation and Land Surface Temperature anomalies using city-year observations from 2015–2025. Multiple regression specifications are used to estimate the relationship between NDVI and LST anomaly while accounting for urban surface characteristics, population density, climate zone, and temporal variation. The analysis emphasizes interpretable effect estimates, uncertainty quantification, model diagnostics, robustness analysis, and residual investigation rather than prediction alone.
-
----
-
-# 📌 Project Status
+## 📌 Project Status
 
 **🚧 Research / Development**
 
-### Completed
+**Completed:** dataset loading & validation · EDA & descriptive statistics · correlation and VIF analysis · simple and multiple linear regression · clustered standard errors · NDVI coefficient interpretation · tree-canopy sensitivity analysis · quadratic regression · model comparison · residual diagnostics · city- and climate-zone-level residual analysis · grouped cross-validation.
 
-* [x] Dataset loading
-* [x] Data inspection
-* [x] Data validation
-* [x] Exploratory Data Analysis
-* [x] Descriptive statistics
-* [x] Correlation analysis
-* [x] VIF analysis
-* [x] Simple Linear Regression
-* [x] Multiple Linear Regression
-* [x] Clustered standard errors
-* [x] NDVI coefficient interpretation
-* [x] Tree-canopy sensitivity analysis
-* [x] Quadratic regression
-* [x] Model comparison
-* [x] Residual diagnostics
-* [x] City-level residual analysis
-* [x] Climate-zone residual analysis
-* [x] Grouped cross-validation
-
-### Planned
-
-* [ ] City + Year Fixed Effects
-* [ ] Geographic coordinate enrichment
-* [ ] Elevation integration
-* [ ] Distance-to-water feature
-* [ ] Spatial residual mapping
-* [ ] Moran's I
-* [ ] Local Moran's I / LISA
-* [ ] Spatial econometric models
-* [ ] Expanded environmental controls
-* [ ] Formal research paper
+**Planned:** city + year fixed effects · geographic coordinate enrichment · elevation and distance-to-water features · spatial residual mapping · Moran's I / LISA · spatial econometric models · expanded environmental controls · formal research write-up.
 
 ---
 
-# 👨‍💻 Author
+## 🤝 Contributing
+
+Issues and suggestions are welcome. If you'd like to contribute additional analyses (e.g. spatial models, new controls, or the fixed-effects extension), please open an issue or pull request describing the proposed change.
+
+---
+
+## 📜 License
+
+This project is licensed under the [MIT License](LICENSE) and is intended for academic, educational, and research purposes. If external datasets or third-party resources are incorporated, their original licensing and attribution requirements should be preserved.
+
+---
+
+## 👨‍💻 Author
 
 **Soumyadeep Chattopadhyay**
-
-Data Science • Machine Learning • Statistical Modeling • Environmental Analytics
-
----
-
-# 📜 License
-
-This project is intended for academic, educational, and research purposes.
-
-If external datasets or third-party resources are incorporated, their original licensing and attribution requirements should be preserved.
+Data Science · Machine Learning · Statistical Modeling · Environmental Analytics
 
 ---
 
-# ⭐ If You Find This Project Useful
-
-If this project is useful for research, learning, or environmental data science, consider:
-
-* ⭐ Starring the repository
-* 🍴 Forking the project
-* 🐛 Reporting issues
-* 💡 Suggesting improvements
-* 🤝 Contributing additional analyses
-
----
-
-# 🌱 Final Perspective
-
-Urban heat is influenced by a complex interaction of vegetation, built surfaces, climate, population, morphology, and atmospheric conditions.
-
-This project approaches the problem from an interpretable statistical perspective:
-
-$$
-\boxed{
-\text{Urban Vegetation}
-\rightarrow
-\text{Statistical Association}
-\rightarrow
-\text{LST Anomaly}
-\rightarrow
-\text{Residual Patterns}
-\rightarrow
-\text{Spatial Research}
-}
-$$
-
-The ultimate goal is to develop a reproducible analytical framework for understanding how urban environmental characteristics relate to surface thermal conditions while maintaining careful distinction between **prediction, association, and causation**.
-
----
-
-**🌱 Urban Heat & Green-Cover Impact Modeling**
 *An interpretable, research-oriented approach to urban environmental data science.*
